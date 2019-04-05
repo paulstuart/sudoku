@@ -1,6 +1,6 @@
 package main
 
-// a brute force sudoku problem solver
+// a brute force Sudoku problem solver
 
 import (
 	"bytes"
@@ -12,9 +12,11 @@ import (
 	"strings"
 )
 
-type sudoku [9][9]int
+// Sudoku is the puzzle data
+type Sudoku [9][9]int
 
-func (s sudoku) String() string {
+// String allows printing the puzzle
+func (s Sudoku) String() string {
 	var b bytes.Buffer
 	for _, row := range s {
 		var strs [9]string
@@ -31,9 +33,9 @@ func (s sudoku) String() string {
 }
 
 // Count returns the count of valid cells
-func (so *sudoku) Count() int {
+func (s *Sudoku) Count() int {
 	count := 0
-	for _, row := range so {
+	for _, row := range s {
 		for _, n := range row {
 			if n > 0 {
 				count++
@@ -43,18 +45,18 @@ func (so *sudoku) Count() int {
 	return count
 }
 
-// Status prints the sudoku puzzle and it's completion status
-func (so sudoku) Status(msg string) {
+// Status prints the Sudoku puzzle and it's completion status
+func (s Sudoku) Status(msg string) {
 	fmt.Println()
-	fmt.Printf("completed: %d/81 (%s)\n", so.Count(), msg)
-	fmt.Println(so)
-	if x, y := so.Valid(); x >= 0 || y >= 0 {
+	fmt.Printf("completed: %d/81 (%s)\n", s.Count(), msg)
+	fmt.Println(s)
+	if x, y := s.Valid(); x >= 0 || y >= 0 {
 		log.Fatalf("invalid cell: %d, %d\n\n", x, y)
 	}
 }
 
 // Valid returns the coordinates of the first invalid cell (if any)
-func (s *sudoku) Valid() (int, int) {
+func (s *Sudoku) Valid() (int, int) {
 	for y, row := range s {
 		for x, n := range row {
 			if s.Conflicted(x, y, n) {
@@ -66,7 +68,7 @@ func (s *sudoku) Valid() (int, int) {
 }
 
 // Conflicted returns true if 'n' has a conflict
-func (s *sudoku) Conflicted(x, y, n int) bool {
+func (s *Sudoku) Conflicted(x, y, n int) bool {
 	if n == 0 {
 		return false
 	}
@@ -107,7 +109,7 @@ func random() []int {
 // Solve does recursive guesses at cell numbers
 // by working with copies of the puzzle
 // it can "backtrack" with a good copy at any point
-func Solve(so sudoku, col, row int) (sudoku, bool) {
+func Solve(so Sudoku, col, row int) (Sudoku, bool) {
 	if col > 8 {
 		col = 0
 		row++
@@ -136,12 +138,12 @@ func Solve(so sudoku, col, row int) (sudoku, bool) {
 }
 
 // Loadfile loads an ascii representation of the Sudoku puzzle
-func Loadfile(filename string) sudoku {
+func Loadfile(filename string) Sudoku {
 	text, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var so sudoku
+	var so Sudoku
 	for y, line := range strings.Split(string(text), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
