@@ -6,24 +6,11 @@ import sys
 
 """puzzle is a list of lists, e.g. puzzle[row][col], effectively y,x not x,y"""
 
-def square(puzzle, col, row):
-    x = (col / 3) * 3
-    y = (row / 3) * 3
-    return [n for cols in puzzle[y:y+3] for n in cols[x:x+3] if n > 0]
-
 def show(puzzle):
     for row in puzzle:
         print(" ".join([str(x) if x > 0 else " " for x in row]))
 
-def conflict(puzzle, col, row, value):
-    """conflict assumes that the value has not been applied (no puzzle conflict)"""
-    return ((value in [rows[col] for rows in puzzle])  or
-            (value in [n for n in puzzle[row]])  or
-            (value in square(puzzle, col, row)))
-
 def duped(puzzle, x, y, value):
-    """differs from conflict in that cells are already applied"""
-
     # does value exist elsewhere in column x?
     for i, row in enumerate(puzzle):
         if row[x] == value and i != y:
@@ -71,7 +58,7 @@ def solve(puzzle, col, row):
         return solve(puzzle, col+1, row)
     
     for n in random():
-        if not conflict(puzzle, col, row, n):
+        if not duped(puzzle, col, row, n):
             puzzle[row][col] = n
             solved, ok = solve(puzzle, col+1, row)
             if ok:
