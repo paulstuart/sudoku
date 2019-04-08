@@ -6,12 +6,6 @@ import sys
 
 """puzzle is a list of lists, e.g. puzzle[row][col], effectively y,x not x,y"""
 
-def getcol(puzzle, x):
-    return [row[x] for row in puzzle if row[x] > 0]
-
-def getrow(puzzle, x):
-    return [n for n in puzzle[x] if n > 0]
-
 def square(puzzle, col, row):
     x = (col / 3) * 3
     y = (row / 3) * 3
@@ -23,8 +17,8 @@ def show(puzzle):
 
 def conflict(puzzle, col, row, value):
     """conflict assumes that the value has not been applied (no puzzle conflict)"""
-    return ((value in getcol(puzzle, col))  or
-            (value in getrow(puzzle, row))  or
+    return ((value in [rows[col] for rows in puzzle])  or
+            (value in [n for n in puzzle[row]])  or
             (value in square(puzzle, col, row)))
 
 def duped(puzzle, x, y, value):
