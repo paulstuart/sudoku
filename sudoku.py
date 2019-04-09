@@ -4,114 +4,61 @@
 from random import shuffle
 import sys
 
-class sudoku(object):
-    def __init__(self, puzzle):
-        self.puzzle = puzzle
-    
-    def col(self, x):
-        return [row[x] for row in self.puzzle if row[x] != ' ']
+"""puzzle is a list of lists, e.g. puzzle[[row1][row2]...], effectively y,x not x,y"""
 
-    def row(self, x):
-        return [n for n in self.puzzle[x] if n != ' ']
-        return self.puzzle[x]
+def show(puzzle):
+    for row in puzzle:
+        print(" ".join([str(x) if x > 0 else " " for x in row]))
 
-    def square(self, col, row):
-        x = (col / 3) * 3
-        y = (row / 3) * 3
-        return [n for cols in self.puzzle[y:y+3] for n in cols[x:x+3] if n != ' ']
+def duped(puzzle, x, y, value):
+    # does value exist elsewhere in column x?
+    for i, row in enumerate(puzzle):
+        if row[x] == value and i != y:
+            return True
 
-    def get(self, col, row):
-        n = self.puzzle[row][col]
-        return 0 if n==' ' else n
+    # does value exist elsewhere in row y?
+    for i, col in enumerate(puzzle[y]):
+        if col == value and i != x:
+            return True
 
-    def set(self, col, row, n):
-        self.puzzle[row][col] = n
+    # our small square
+    x2 = (x / 3) * 3
+    y2 = (y / 3) * 3
+    for i, row in enumerate(puzzle[y2:y2+3], y2):
+        for j, col in enumerate(row[x2:x2+3], x2):
+            if col == value and not (i == y and x == j):
+                return True
 
-    def show(self):
-        for row in self.puzzle:
-            print(" ".join([str(x) for x in row]))
+    return False
 
-    def conflict(self, col, row, value):
-        """conflict assumes that the value has not been applied (no self conflict)"""
-        return ((value in self.col(col))  or
-                (value in self.row(row))  or
-                (value in self.square(col, row)))
-
-    def duped(self, x, y, value):
-        """differs from conflict in that cells are already applied"""
-        for i, col in enumerate(self.puzzle[y]):
-		if col == value and i != x:
-			return True
-
-        for i, row in enumerate(self.puzzle):
-		if row[x] == value and i != y:
-			return True
-
-        # ugly but it works
-        x2 = (x / 3) * 3
-        y2 = (y / 3) * 3
-        for i, row in enumerate(self.puzzle[y2:y2+3], y2):
-            for j, col in enumerate(row[x2:x2+3], x2):
-                if col == value and not (i == y and x == j):
-                    return True
-
-        return False
-
-    def count(self):
-        n = 0
-        for row in self.puzzle:
-            for col in row:
-                if col != ' ' and col > 0:
-                    n += 1
-        return n
-
-    def valid(self):
-        for y, row in enumerate(self.puzzle):
-            for x, n in enumerate(row):
-                if self.duped(x, y, n):
-                    return x, y
-	return -1, -1
-
-
-def solve(so, col, row):
-    """solve a cell at a time and recursively guess new entries"""
+def solve(puzzle, col, row):
+    """solve one cell at a time and recursively guess new entries"""
     if col > 8:
         col = 0
         row += 1
         if row > 8:
-            # done, no more recursion
-            return so, True
+            # all cells filled, we're done
+            return puzzle, True
     
-    # already set?
-    if so.get(col, row) > 0:
-        # move on to next cell
-        return solve(so, col+1, row)
+    # skip if already set
+    if puzzle[row][col] > 0:
+        return solve(puzzle, col+1, row)
     
     for n in random():
-        if not so.conflict(col, row, n):
-            so.set(col, row, n)
-            solved, ok = solve(so, col+1, row)
+        if not duped(puzzle, col, row, n):
+            puzzle[row][col] = n
+            solved, ok = solve(puzzle, col+1, row)
             if ok:
                 return solved, True
 
     # this is a dead end, retry up the call stack
-    so.set(col, row, ' ')
-    return so, False
-
+    puzzle[row][col] = 0
+    return puzzle, False
 
 def random():
     list = range(1,10)
-    #shuffle(list)
-    for i in list:
-        yield i
-
-
-def num(s):
-    try:
-        return int(s)
-    except:
-        return ' '
-
+    shuffle(list)
+    return list
 
 def load(filename):
     with open(filename) as f:
@@ -120,7 +67,23 @@ def load(filename):
             bits = [num(x) for x in line.split()]
             if len(bits) == 9:
                 puzzle.append(bits)
-        return sudoku(puzzle)
+        return puzzle
+
+def num(s):
+    try:
+        return int(s)
+    except:
+        return 0
+
+def valid(puzzle):
+    for y, row in enumerate(puzzle):
+        for x, n in enumerate(row):
+            if (n > 0 and duped(puzzle, x, y, n)):
+                print("\nduplicate entry: {} @ {}, {}\n".format(n, x+1, y+1))
+                sys.exit()
+
+def count(puzzle):
+    return sum([x > 0 for row in puzzle for x in row])
 
 
 def main():
@@ -129,21 +92,23 @@ def main():
     except:
         filename = 'sample.txt'
 
-    so = load(filename)
-    print("\ngiven ({}/81):".format(so.count()))
-    so.show()
+    puzzle = load(filename)
+    print("\ngiven ({}/81):".format(count(puzzle)))
+    show(puzzle)
 
-    solved, ok = solve(so, 0, 0)
+    # make sure we can solve it!
+    valid(puzzle)
+
+    solved, ok = solve(puzzle, 0, 0)
 
     print("\nSOLVED: {}".format(ok))
-    solved.show()
+    show(solved)
     print
 
-    x, y = so.valid()
-    if x >= 0 or y >= 0:
-        print("invalid cell: {}, {}\n".format(x, y))
+    # prove that we actually solved it
+    valid(puzzle)
+
 
 if __name__ == "__main__":
     main()
-
 
