@@ -31,20 +31,15 @@ def duped(puzzle, x, y, value):
 
     return False
 
-def count(puzzle):
-    return sum([x > 0 for row in puzzle for x in row])
-
 def valid(puzzle):
     for y, row in enumerate(puzzle):
         for x, n in enumerate(row):
-            if n > 0:
-                if duped(puzzle, x, y, n):
-                    return x, y
-    return -1, -1
-
+            if (n > 0 and duped(puzzle, x, y, n)):
+                print("\nduplicate entry: {} @ {}, {}\n".format(n, x+1, y+1))
+                sys.exit()
 
 def solve(puzzle, col, row):
-    """solve a cell at a time and recursively guess new entries"""
+    """solve one cell at a time and recursively guess new entries"""
     if col > 8:
         col = 0
         row += 1
@@ -52,9 +47,8 @@ def solve(puzzle, col, row):
             # all cells filled, we're done
             return puzzle, True
     
-    # already set?
+    # skip if already set
     if puzzle[row][col] > 0:
-        # move on to next cell
         return solve(puzzle, col+1, row)
     
     for n in random():
@@ -71,9 +65,8 @@ def solve(puzzle, col, row):
 
 def random():
     list = range(1,10)
-    #shuffle(list)
-    for i in list:
-        yield i
+    shuffle(list)
+    return list
 
 
 def num(s):
@@ -92,6 +85,8 @@ def load(filename):
                 puzzle.append(bits)
         return puzzle
 
+def count(puzzle):
+    return sum([x > 0 for row in puzzle for x in row])
 
 def main():
     try:
@@ -104,10 +99,7 @@ def main():
     show(puzzle)
 
     # make sure we can solve it!
-    x, y = valid(puzzle)
-    if x >= 0 or y >= 0:
-        print("\ninvalid cell: {}, {}\n".format(x, y))
-        sys.exit()
+    valid(puzzle)
 
     solved, ok = solve(puzzle, 0, 0)
 
@@ -115,9 +107,8 @@ def main():
     show(solved)
     print
 
-    x, y = valid(solved)
-    if x >= 0 or y >= 0:
-        print("invalid cell: {}, {}\n".format(x, y))
+    # prove that we actually solved it
+    valid(puzzle)
 
 if __name__ == "__main__":
     main()
